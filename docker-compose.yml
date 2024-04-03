@@ -1,0 +1,64 @@
+version: "3.1"
+
+services:
+  db-rafart:
+    image: postgres:11.3
+    restart: always
+    volumes:
+      - "pg-db-rafart:/var/lib/postgresql/data"
+    environment:
+      POSTGRES_PASSWORD: "password"
+      POSTGRES_USER: "admin"
+      POSTGRES_DB: "pg-db-rafart"
+    ports:
+      - "5432:5432"
+    networks:
+      - backend
+
+  redis-rafart:
+    image: "redis:latest"
+    restart: always
+    ports:
+      - "6380:6379" # Make host port 6380 to avoid conflict with local redis service. Mapped to 6379 on the container.
+    networks:
+      - backend
+    volumes:
+      - "redis-data-rafart:/data" # Mount a volume to persist data
+    command: redis-server --appendonly yes # Enable append-only file for persistence
+
+  nodeapp-rafart:
+    image: "node:16"
+    build: ./
+    working_dir: "/app"
+    volumes:
+      - "./:/app"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db-rafart
+      - redis-rafart
+    environment:
+      NODE_ENV: "development"
+      SECRET: ${SECRET}
+      PG_HOST: ${PG_HOST}
+      PG_PASSWORD: ${PG_PASSWORD}
+      PG_USER_NAME: ${PG_USER_NAME}
+      PG_DATABASE: ${PG_DATABASE}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      TEST_STRIPE_SECRET_KEY: ${TEST_STRIPE_SECRET_KEY}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET}
+    command: "yarn dev"
+    networks:
+      - backend
+
+volumes:
+  pg-db-rafart:
+  redis-data-rafart: # Declare the volume for Redis data persistence
+
+networks:
+  backend:
+    driver: bridge
