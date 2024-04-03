@@ -26,6 +26,7 @@ Rafart App Backend Service (WIP)
 # How to Run Locally
 This app is dockerized. To get up and running:
 1. Create a `.env` file and fill in the data.
+2. In the root foder install dependencies: `yarn install`
 2. Make sure you have Docker Engine installed and run the following in the root directory:
    `docker compose up`
 
