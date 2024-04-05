@@ -8,6 +8,7 @@ import {
   requestPasswordReset,
   resendConfirmation,
   resetPassword,
+  signUp,
   user,
   validateToken,
 } from "../useCases/auth";
@@ -31,6 +32,7 @@ router.post("/reset-password", resetPassword);
 
 router.post("/confirm-user", confirmUser);
 router.post("/resend-confirm", resendConfirmation);
+router.post("/sign-up", signUp);
 
 // User NOTE: Perhaps not needed
 router.get(

@@ -4,8 +4,7 @@ import "reflect-metadata";
 import { DataSource } from "typeorm";
 import { Document } from "./entity/Document";
 import { User } from "./entity/User";
-
-import { AddUserAndDocumentModel1712155250382 } from "./migration/1712155250382-AddUserAndDocumentModel";
+import { AddUserAndDocumentModel1712338285673 } from "./migration/1712338285673-AddUserAndDocumentModel";
 
 const sslRequired =
   process.env.NODE_ENV === "production" || process.env.NODE_ENV === "staging";
@@ -27,6 +26,6 @@ export const AppDataSource = new DataSource({
   synchronize: false, // NOTE: Automatic migration (make it false in production)
   logging: false,
   entities: [Document, User],
-  migrations: [AddUserAndDocumentModel1712155250382],
+  migrations: [AddUserAndDocumentModel1712338285673],
   subscribers: [],
 });

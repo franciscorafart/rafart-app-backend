@@ -7,11 +7,13 @@ import {
   findByEmail,
   comparePassword,
   updateUser,
+  createUser,
 } from "../gateway/user";
 import * as crypto from "crypto";
 import { sendConfirmationEmail, sendResetEmail } from "../helpers/email";
 import { userToResponseUser } from "../utils/dataMappers";
-import { ResponseStatus } from "../shared/enums";
+import { ResponseStatus, Roles } from "../shared/enums";
+import { signUpPasswordValid } from "../utils/password";
 
 const secret = process.env.SECRET;
 
@@ -67,6 +69,60 @@ export const login = async (req, res) => {
           msg: "Wrong password.",
         });
       }
+    }
+  } catch (err) {
+    res.status(500).send({
+      status: ResponseStatus.Error,
+      success: false,
+      msg: err,
+    });
+  }
+};
+export const signUp = async (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+  const confirmPassword = req.body.confirmPassword;
+
+  try {
+    if (
+      !email ||
+      !password ||
+      !confirmPassword ||
+      !signUpPasswordValid(password) ||
+      password !== confirmPassword
+    ) {
+      res.status(400).send({
+        status: ResponseStatus.BadRequest,
+        success: false,
+        msg: "Email and valid password are required",
+      });
+    } else {
+      const encryptedPass = await genEncryptedPassword(password);
+      await createUser({
+        email,
+        // firstName: first,
+        // lastName: last,
+        role: Roles.Fan,
+        confirmed: false,
+        encryptedPassword: encryptedPass,
+      });
+
+      // Send confirmation email
+      const recoveryToken = crypto.randomBytes(20).toString("hex");
+
+      const redisRes = await redisClient.set(recoveryToken, email);
+      redisClient.expire(recoveryToken, 60 * 60); // 1hr
+
+      if (redisRes === "OK") {
+        const emailSuccess = await sendResetEmail(email, recoveryToken);
+      }
+
+      res.status(200).send({
+        status: ResponseStatus.Ok,
+        success: true,
+        msg: "User created",
+        email: email,
+      });
     }
   } catch (err) {
     res.status(500).send({
@@ -258,7 +314,7 @@ export const confirmUser = async (req, res) => {
   try {
     const confirmationToken = req.body.confirmationToken;
     const redisEmail = await redisClient.get(confirmationToken);
-    const newPassword = req.body.password;
+    // const newPassword = req.body.password;
 
     if (redisEmail) {
       const user = await findByEmail(redisEmail);
@@ -269,9 +325,9 @@ export const confirmUser = async (req, res) => {
           msg: "No user found for token",
         });
       } else {
-        const newEncryptedPassword = await genEncryptedPassword(newPassword);
+        // const newEncryptedPassword = await genEncryptedPassword(newPassword);
         await updateUser(user, {
-          encryptedPassword: newEncryptedPassword,
+          // encryptedPassword: newEncryptedPassword,
           confirmed: true,
         });
 
