@@ -10,10 +10,10 @@ import {
   createUser,
 } from "../gateway/user";
 import * as crypto from "crypto";
-import { sendConfirmationEmail, sendResetEmail } from "../helpers/email";
+import { sendResetEmail } from "../helpers/email";
 import { userToResponseUser } from "../utils/dataMappers";
 import { ResponseStatus, Roles } from "../shared/enums";
-import { signUpPasswordValid } from "../utils/password";
+import { logError } from "../helpers/logger";
 
 const secret = process.env.SECRET;
 
@@ -33,7 +33,7 @@ export const login = async (req, res) => {
       res.status(400).send({
         status: ResponseStatus.BadRequest,
         success: false,
-        msg: "Confirm email before login",
+        msg: "Confirm user by setting password before login",
       });
     } else {
       // check if password matches
@@ -78,57 +78,67 @@ export const login = async (req, res) => {
     });
   }
 };
+
 export const signUp = async (req, res) => {
   const email = req.body.email;
-  const password = req.body.password;
-  const confirmPassword = req.body.confirmPassword;
 
   try {
-    if (
-      !email ||
-      !password ||
-      !confirmPassword ||
-      !signUpPasswordValid(password) ||
-      password !== confirmPassword
-    ) {
+    if (!email) {
       res.status(400).send({
         status: ResponseStatus.BadRequest,
         success: false,
-        msg: "Email and valid password are required",
+        msg: "Email required",
       });
-    } else {
-      const encryptedPass = await genEncryptedPassword(password);
-      await createUser({
-        email,
-        // firstName: first,
-        // lastName: last,
-        role: Roles.Fan,
-        confirmed: false,
-        encryptedPassword: encryptedPass,
-      });
-
-      // Send confirmation email
-      const recoveryToken = crypto.randomBytes(20).toString("hex");
-
-      const redisRes = await redisClient.set(recoveryToken, email);
-      redisClient.expire(recoveryToken, 60 * 60); // 1hr
-
-      if (redisRes === "OK") {
-        const emailSuccess = await sendResetEmail(email, recoveryToken);
-      }
-
-      res.status(200).send({
-        status: ResponseStatus.Ok,
-        success: true,
-        msg: "User created",
-        email: email,
-      });
+      return;
     }
+
+    const existingUser = await findByEmail(email);
+
+    if (existingUser) {
+      res.status(401).send({
+        status: ResponseStatus.BadRequest,
+        success: false,
+        msg: "User exists with that email.",
+      });
+      return;
+    }
+
+    // User won't be able to login until they reset their password
+    const encryptedPass = await genEncryptedPassword("temporary-password");
+
+    await createUser({
+      email,
+      // firstName: first,
+      // lastName: last,
+      role: Roles.Fan,
+      confirmed: false,
+      encryptedPassword: encryptedPass,
+    });
+
+    // Send reset password+ email
+    const recoveryToken = crypto.randomBytes(20).toString("hex");
+
+    const redisRes = await redisClient.set(recoveryToken, email);
+    redisClient.expire(recoveryToken, 60 * 60); // 1hr
+
+    if (redisRes === "OK") {
+      await sendResetEmail(email, recoveryToken);
+    } else {
+      throw new Error("Token not saved");
+    }
+
+    res.status(200).send({
+      status: ResponseStatus.Ok,
+      success: true,
+      msg: "User created",
+      email: email,
+    });
   } catch (err) {
+    logError(err);
     res.status(500).send({
       status: ResponseStatus.Error,
       success: false,
-      msg: err,
+      msg: "Error creating user",
     });
   }
 };
@@ -232,7 +242,10 @@ export const resetPassword = async (req, res) => {
         });
       } else {
         const newEncryptedPassword = await genEncryptedPassword(newPassword);
-        updateUser(user, { encryptedPassword: newEncryptedPassword });
+        updateUser(user, {
+          encryptedPassword: newEncryptedPassword,
+          confirmed: true,
+        });
 
         await redisClient.del(recoveryToken);
         res.status(200).send({
@@ -257,105 +270,6 @@ export const resetPassword = async (req, res) => {
         status: ResponseStatus.Error,
         success: false,
         msg: "Error validating",
-      })
-    );
-  }
-};
-
-export const resendConfirmation = async (req, res) => {
-  try {
-    const email = req.body.email;
-    const confirmationToken = crypto.randomBytes(20).toString("hex");
-    const redisRes = await redisClient.set(confirmationToken, email);
-    redisClient.expire(confirmationToken, 60 * 60 * 24); // 1d
-
-    if (redisRes === "OK") {
-      const emailSuccess = await sendConfirmationEmail(
-        email,
-        confirmationToken
-      );
-      if (emailSuccess) {
-        res.status(200).send({
-          status: ResponseStatus.Ok,
-          success: true,
-          msg: "Re-sent user confirmation email",
-          email: email,
-        });
-      } else {
-        res.status(500).send(
-          JSON.stringify({
-            status: ResponseStatus.Error,
-            success: false,
-            msg: "Confirm request email failed",
-          })
-        );
-      }
-    } else {
-      res.status(500).send({
-        status: ResponseStatus.Error,
-        success: false,
-        msg: "Confirm request failed",
-        email: email,
-      });
-    }
-  } catch (e) {
-    res.status(500).send(
-      JSON.stringify({
-        status: ResponseStatus.Error,
-
-        success: false,
-        msg: "Confirm request failed",
-      })
-    );
-  }
-};
-
-export const confirmUser = async (req, res) => {
-  try {
-    const confirmationToken = req.body.confirmationToken;
-    const redisEmail = await redisClient.get(confirmationToken);
-    // const newPassword = req.body.password;
-
-    if (redisEmail) {
-      const user = await findByEmail(redisEmail);
-      if (!user) {
-        res.status(401).send({
-          status: ResponseStatus.BadRequest,
-          success: false,
-          msg: "No user found for token",
-        });
-      } else {
-        // const newEncryptedPassword = await genEncryptedPassword(newPassword);
-        await updateUser(user, {
-          // encryptedPassword: newEncryptedPassword,
-          confirmed: true,
-        });
-
-        await redisClient.del(confirmationToken);
-
-        res.status(200).send({
-          status: ResponseStatus.Ok,
-          success: true,
-          msg: "User confirmed succesfully",
-          email: redisEmail,
-        });
-      }
-    } else {
-      res.status(400).send(
-        JSON.stringify({
-          status: ResponseStatus.BadRequest,
-          success: false,
-          msg: "Confirmation link expired or invalid",
-          email: redisEmail,
-        })
-      );
-    }
-  } catch (e) {
-    res.status(500).send(
-      JSON.stringify({
-        status: ResponseStatus.Error,
-        success: false,
-        msg: "Error validating token",
       })
     );
   }

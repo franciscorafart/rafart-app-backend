@@ -2,11 +2,9 @@ import { Router } from "express";
 import passport from "passport";
 import checkRedisToken from "../middleware/checkRedisToken";
 import {
-  confirmUser,
   login,
   logout,
   requestPasswordReset,
-  resendConfirmation,
   resetPassword,
   signUp,
   user,
@@ -23,16 +21,13 @@ PP(passport);
 
 // //SignIn
 router.post("/login", login);
+router.post("/sign-up", signUp);
 
 router.post("/request-password-reset", requestPasswordReset);
 
 router.post("/validate-token", validateToken);
 
 router.post("/reset-password", resetPassword);
-
-router.post("/confirm-user", confirmUser);
-router.post("/resend-confirm", resendConfirmation);
-router.post("/sign-up", signUp);
 
 // User NOTE: Perhaps not needed
 router.get(
@@ -50,3 +45,9 @@ router.get(
 );
 
 export default router;
+
+// 1. User signs up => Email to reset password
+// 2. User requests password reset => Email to reset password (and confirm)
+// 3. User requests recover account => Email sent to reset password and confirm
+
+// 2 and 3 should be the same endpoint and front end

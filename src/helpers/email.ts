@@ -1,15 +1,16 @@
 import transporter from "../config/transporter";
+import { logError } from "./logger";
 
 export async function sendConfirmationEmail(
   userEmail: string,
-  confirmationToken: string
+  resetToken: string
 ) {
   const mailOptions = {
     from: process.env.EMAIL,
     to: userEmail,
     subject: "Confirm your email",
-    text: `Click on the following link to confirm your email. Link expires in 24 hours.
-    ${process.env.APP_URL}/confirm-user?confirmation=${confirmationToken}
+    text: `Click on the following link to confirm your email and set your password. Link expires in 24 hours.
+    ${process.env.APP_URL}/reset-password?recovery=${resetToken}
 `,
   };
 
@@ -17,7 +18,7 @@ export async function sendConfirmationEmail(
     await transporter.sendMail(mailOptions);
     return true;
   } catch (err) {
-    console.log("Email error", err);
+    logError(`Error sending email: ${err}`);
     return false;
   }
 }
@@ -26,8 +27,8 @@ export async function sendResetEmail(userEmail, resetToken) {
   const mailOptions = {
     from: process.env.EMAIL,
     to: userEmail,
-    subject: "Reset password request - Rafart App",
-    text: `Click on this link to reset your password. Link expires in 24 hours.
+    subject: "Reset / Set new password request - Rafart App",
+    text: `Hi. Click on this link to set up or reset your password. The link expires in 24 hours.
     ${process.env.APP_URL}/reset-password?recovery=${resetToken}
     Don't share this link.`,
   };
@@ -36,7 +37,7 @@ export async function sendResetEmail(userEmail, resetToken) {
     await transporter.sendMail(mailOptions);
     return true;
   } catch (err) {
-    console.log("Email error", err);
+    logError(`Error sending email: ${err}`);
     return false;
   }
 }
