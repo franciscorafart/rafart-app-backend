@@ -25,7 +25,7 @@ export class User {
   })
   documents: Document[];
 
-  @Column({ default: Roles.clientGuest })
+  @Column({ default: Roles.Fan })
   role: number;
 
   @Column({ type: "timestamptz" })

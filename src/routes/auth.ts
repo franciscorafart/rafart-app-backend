@@ -45,9 +45,3 @@ router.get(
 );
 
 export default router;
-
-// 1. User signs up => Email to reset password
-// 2. User requests password reset => Email to reset password (and confirm)
-// 3. User requests recover account => Email sent to reset password and confirm
-
-// 2 and 3 should be the same endpoint and front end

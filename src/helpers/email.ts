@@ -1,5 +1,5 @@
 import transporter from "../config/transporter";
-import { logError } from "./logger";
+import { logError, log } from "./logger";
 
 export async function sendConfirmationEmail(
   userEmail: string,
@@ -54,9 +54,9 @@ export const sendTestEmail = () => {
   // Send email
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
-      console.error("Error sending email:", error);
+      logError(`Error sending email: ${error}`);
     } else {
-      console.log("Email sent:", info.response);
+      log(`Email sent: ${info.response}`);
     }
   });
 };

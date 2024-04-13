@@ -1,0 +1,68 @@
+version: "3.1"
+
+services:
+  test-db-rafart:
+    image: postgres:11.3
+    restart: always
+    # volumes:
+    #   - "pg-test-db-rafart:/var/lib/postgresql/data"
+    environment:
+      POSTGRES_PASSWORD: "password"
+      POSTGRES_USER: "admin"
+      POSTGRES_DB: "pg-test-db-rafart"
+    ports:
+      - "5433:5432"
+    networks:
+      - test-backend
+
+  test-redis-rafart:
+    image: "redis:latest"
+    restart: always
+    ports:
+      - "6381:6379" # Make host port 6381 to avoid conflict with local redis service and development one. Mapped to 6379 on the container.
+    networks:
+      - test-backend
+    volumes:
+      - "test-redis-data:/data" # Mount a volume to persist data
+    command: redis-server --appendonly yes # Enable append-only file for persistence
+
+  test-rafart:
+    image: "node:16"
+    working_dir: "/app"
+    volumes:
+      - "./:/app"
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NC_INSTALL=true
+    ports:
+      - "8001:8000"
+    depends_on:
+      - test-db-rafart
+      - test-redis-rafart
+    environment:
+      NODE_ENV: "test"
+      SECRET: ${SECRET}
+      PG_HOST: test-db-rafart
+      PG_PASSWORD: "password"
+      PG_USER_NAME: "admin"
+      PG_DATABASE: "pg-test-db-rafart"
+      REDIS_HOST: "test-redis-rafart"
+      REDIS_PORT: "6379"
+      EMAIL: ${EMAIL}
+      APP_URL: ${APP_URL}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION}
+    command: "sh -c ./init-db.sh"
+    networks:
+      - test-backend
+
+volumes:
+  # pg-test-db-rafart:
+  test-redis-data: # Declare the volume for Redis data persistence
+
+networks:
+  test-backend:
+    driver: bridge

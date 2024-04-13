@@ -3,7 +3,6 @@ export enum Roles {
   SuperFan = 30,
   Admin = 40,
   Superadmin = 50,
-  clientGuest,
 }
 
 export enum ResponseStatus {
