@@ -16,13 +16,14 @@ export const AppDataSource = new DataSource({
   username: process.env.PG_USER_NAME,
   password: process.env.PG_PASSWORD,
   database: process.env.PG_DATABASE,
-  ssl: sslRequired // TODO: Remove for Flyio?
-    ? {
-        ca: readFileSync(
-          join(__dirname, "assets", "us-east-1-bundle.pem")
-        ).toString(),
-      }
-    : undefined, // NOTE: Add RDS SSL certificate bundle .pem file to /assets directory in production
+  // ssl: sslRequired // TODO: Remove for Flyio?
+  //   ? {
+  //       ca: readFileSync(
+  //         join(__dirname, "assets", "us-east-1-bundle.pem")
+  //       ).toString(),
+  //     }
+  //   : undefined, // NOTE: Add RDS SSL certificate bundle .pem file to /assets directory in production
+  ssl: undefined,
   synchronize: false, // NOTE: Automatic migration (make it false in production)
   logging: false,
   entities: [Document, User],
