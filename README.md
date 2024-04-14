@@ -70,3 +70,31 @@ Other folders:
 
 - Helpers: Helper functions that combine different methods to simplify a task and can have side effects. For example: email sending, get files from S3.
 - Utility: Pure functions that do one task, like data mappers, formatters, calculation, date handling, calculations.
+
+# Testing
+
+# Tests
+
+Tests run on a dockerized test environment separate from development.
+
+1. To run the test environment spin up the `docker-compose.test.yaml` containers running:
+
+`docker compose -f docker-compose.test.yml up`
+
+2. Go into the test app container shell
+   `docker exec -ti <test_node_app_container_name> bash`
+
+For example: `docker exec -ti rafart-api-test-rafart-1 bash`
+
+3. Run tests inside container
+   `yarn test`
+
+## Notes
+
+The docker-compose.test.yml file doesn't have a volume for postgres (commented out). To reset the database completely, just run:
+`docker compose -f docker-compose.test.yml down`
+
+### Supertest notes
+
+- Supertest route tests don't need the docker environment set up, as supertest establishes the database connections and app independently.
+- Supertest is like a client based http request tool (ex: axios) but for api testing.
