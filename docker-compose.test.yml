@@ -27,7 +27,7 @@ services:
     command: redis-server --appendonly yes # Enable append-only file for persistence
 
   test-rafart:
-    image: "node:16"
+    image: "node:16" # TODO: Migrate to 20/ Fix NC install issue
     working_dir: "/app"
     volumes:
       - "./:/app"

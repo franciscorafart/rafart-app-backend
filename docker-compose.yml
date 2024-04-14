@@ -27,7 +27,7 @@ services:
     command: redis-server --appendonly yes # Enable append-only file for persistence
 
   nodeapp-rafart:
-    image: "node:16"
+    image: "node:20"
     build: ./
     working_dir: "/app"
     volumes:

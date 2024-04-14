@@ -4,13 +4,12 @@
   "description": "Backend for rafart music app",
   "main": "./src/index.js",
   "engine": {
-    "node": ">=16.0.0 <17.0.0"
+    "node": ">=20.0.0"
   },
   "scripts": {
     "start": "ts-node build/index.js",
     "dev": "nodemon src/index.ts",
     "build": "tsc -p tsconfig.prod.json",
-    "build-prod": "yarn build && mkdir -p build/assets && mkdir -p src/assets && cp ../us-east-1-bundle.pem build/assets/ && cp ../us-east-1-bundle.pem src/assets/",
     "command": "ts-node",
     "test": "jest --verbose --runInBand",
     "typeorm": "ts-node ./node_modules/.bin/typeorm",

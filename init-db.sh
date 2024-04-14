@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# NOTE: Make sure this file is  executable by running chmod +x init-db.sh
+
 echo "Waiting for PostgreSQL to start..."
 
 until nc -z "test-db-rafart" "5432"; do
