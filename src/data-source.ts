@@ -1,5 +1,3 @@
-import { readFileSync } from "fs";
-import { join } from "path";
 import "reflect-metadata";
 import { DataSource } from "typeorm";
 import { Document } from "./entity/Document";

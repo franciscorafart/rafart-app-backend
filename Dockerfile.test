@@ -1,4 +1,4 @@
-FROM node:20
+FROM node:16
 
 # NOTE: This is a test Dockerfile used to install netcat on the testing env.
 # netcat is used to wait for Postgres to be available before running tests.

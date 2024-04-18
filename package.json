@@ -2,14 +2,15 @@
   "name": "rafart-music-app",
   "version": "1.0.0",
   "description": "Backend for rafart music app",
-  "main": "./src/index.js",
+  "main": "./src/index.ts",
   "engine": {
-    "node": ">=20.0.0"
+    "node": "20.x"
   },
   "scripts": {
     "start": "ts-node build/index.js",
     "dev": "nodemon src/index.ts",
-    "build": "tsc -p tsconfig.prod.json",
+    "build": "tsc -p tsconfig.json",
+    "build-prod": "tsc -p tsconfig.prod.json",
     "command": "ts-node",
     "test": "jest --verbose --runInBand",
     "typeorm": "ts-node ./node_modules/.bin/typeorm",
@@ -51,6 +52,7 @@
     "typeorm": "^0.3.20"
   },
   "devDependencies": {
+    "@tsconfig/node20": "^20.1.4",
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
